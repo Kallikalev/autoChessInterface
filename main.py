@@ -3,7 +3,7 @@ gameState = {
   "nextMove" : "w",
   "castling" : "KQkq", # k means kingside, q means queenside, uppercase is white and lowercase is black, a dash indicates no castling available
   "passant" : "-", # the target square in algabreic notation, this is the square "behind" the pawn
-  "halfClock" : 0, # the number of moves since the last capture or pawn move, used for the fifty-move tie rule
+  "halfClock" : 0, # the number of half-moves since the last capture or pawn move, used for the fifty-move tie rule
   "fullmoveNum" : 1 # the number of the full move, incremented after black's move
 }
 
@@ -50,12 +50,50 @@ def exportFEN(gameState): #turn a game state dictionary into a FEN string
   boardString = boardString[0:-1] # remove last slash using slicing
   
   return boardString + " " + gameState["nextMove"] + " " + gameState["castling"] + " " + gameState["passant"] + " " + str(gameState["halfClock"]) + " " + str(gameState["fullmoveNum"])
-      
 
-print(gameState)
+def standardLocToPos(location): # converts a location like "e2" into it's code representation of [4,6]
+  file = ord(location[0:1])-97
+  rank = 8-int(location[1:2])
+  return [rank,file]
+
+def doMove(gameState,move):
+  if (move == "O-O"): # TODO: implement castling
+    print("Castle kingside")
+  elif (move == "O-O-O"):
+    print("Castle queenside")
+  else:
+    pieceType = move[0:1]
+    startLocation = standardLocToPos(move[1:3])
+    if (move[3:4] == "x"):
+      endLocation = standardLocToPos(move[4:6])
+    else:
+      endLocation = standardLocToPos(move[3:5])
+    gameState["board"][endLocation[0]][endLocation[1]] = pieceType
+    gameState["board"][startLocation[0]][startLocation[1]] = "-"
+  if (gameState["nextMove"] == "w"): # flip the next player to move
+    gameState["nextMove"] = "b"
+  else:
+    gameState["nextMove"] = "w"
+    gameState["fullmoveNum"] = gameState["fullmoveNum"] + 1 # increment the number of full moves after black makes a move
+  if (move.lower()[0:1] == "p" or move[3:4] == "x"): # check if a capture has occurred or a pawn has advanced for the 50-move tie rule
+    gameState["halfClock"] = 0
+  else:
+    gameState["halfClock"] = gameState["halfClock"] + 1
+  return gameState
+    
 
 gameState = importFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 
-print(gameState)
+print(exportFEN(gameState))
 
+print("Pe2e4")
+gameState = doMove(gameState,"Pe2e4")
+print(exportFEN(gameState))
+
+print("pd7d6")
+gameState = doMove(gameState,"pd7d6")
+print(exportFEN(gameState))
+
+print("Bf1b5")
+gameState = doMove(gameState,"Bf1b5")
 print(exportFEN(gameState))
